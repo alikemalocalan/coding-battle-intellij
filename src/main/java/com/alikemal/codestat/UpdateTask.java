@@ -46,13 +46,13 @@ public class UpdateTask implements Runnable {
         try {
             List<XP> xpList = new ArrayList<>();
 
-            xps.forEach((s, integer) -> xpList.add(new XP(s,integer)));
+            xps.forEach((s, integer) -> xpList.add(new XP(s, integer)));
 
             final String now = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX")
                     .withZone(TimeZone.getDefault().toZoneId())
                     .format(Instant.now());
 
-            StringEntity entity = new StringEntity(new Gson().toJson(new XpResponse(now,xpList)));
+            StringEntity entity = new StringEntity(new Gson().toJson(new XpResponse(now, xpList)));
 
             // Sometimes after some combination of user action, the API URL ends up as an empty string, guard against it
             if (apiURL == null || apiURL.equals("")) {
@@ -75,7 +75,7 @@ public class UpdateTask implements Runnable {
                 System.out.println(EntityUtils.toString(response.getEntity()));
             } catch (IOException e) {
                 e.printStackTrace();
-            }finally {
+            } finally {
                 try {
                     client.close();
                 } catch (IOException e) {
@@ -89,14 +89,12 @@ public class UpdateTask implements Runnable {
                 }
 
                 statusBarIcons.values().forEach(StatusBarIcon::clear);
-            }
-            else if (response.getStatusLine().getStatusCode() == 403) {
+            } else if (response.getStatusLine().getStatusCode() == 403) {
                 // The API key was wrong when updating
                 for (StatusBarIcon statusBarIcon : statusBarIcons.values()) {
                     statusBarIcon.setError("Unauthorized. Please check that your API key is valid.");
                 }
-            }
-            else {
+            } else {
                 for (StatusBarIcon statusBarIcon : statusBarIcons.values()) {
                     statusBarIcon.setError("Unknown status code when updating: " + String.valueOf(response.getStatusLine().getStatusCode()));
                 }

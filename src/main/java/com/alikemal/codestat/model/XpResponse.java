@@ -7,6 +7,14 @@ public class XpResponse {
     private String coded_at;
     private List<XP> xps;
 
+    public XpResponse() {
+    }
+
+    public XpResponse(String coded_at, List<XP> xps) {
+        this.coded_at = coded_at;
+        this.xps = xps;
+    }
+
     public String getCoded_at() {
         return coded_at;
     }
@@ -20,14 +28,6 @@ public class XpResponse {
     }
 
     public void setXps(List<XP> xps) {
-        this.xps = xps;
-    }
-
-    public XpResponse() {
-    }
-
-    public XpResponse(String coded_at, List<XP> xps) {
-        this.coded_at = coded_at;
         this.xps = xps;
     }
 }

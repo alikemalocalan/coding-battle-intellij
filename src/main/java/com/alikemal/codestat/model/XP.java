@@ -4,6 +4,11 @@ public class XP {
     private String language;
     private int xp;
 
+    public XP(String language, int xp) {
+        this.language = language;
+        this.xp = xp;
+    }
+
     public String getLanguage() {
         return language;
     }
@@ -36,11 +41,6 @@ public class XP {
         int result = language.hashCode();
         result = 31 * result + xp;
         return result;
-    }
-
-    public XP(String language, int xp) {
-        this.language = language;
-        this.xp = xp;
     }
 
     public void increaseXP() {

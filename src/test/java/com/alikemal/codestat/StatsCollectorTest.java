@@ -44,9 +44,9 @@ public class StatsCollectorTest {
     public void inputJson(){
         String now = "123";
 
-        List<XP> xps= new ArrayList<>();
-        xps.add(new XP("jv",12) );
-        xps.add(new XP("js",1) );
+        List<XP> xps = new ArrayList<>();
+        xps.add(new XP("jv", 12));
+        xps.add(new XP("js", 1));
 
         System.out.println(new Gson().toJson(new XpResponse(now,xps)));
     }
