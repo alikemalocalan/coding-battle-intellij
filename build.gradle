@@ -1,0 +1,27 @@
+plugins {
+    id 'org.jetbrains.intellij' version '0.3.2'
+}
+
+group 'com.alikemal'
+version '1.0-SNAPSHOT'
+
+intellij {
+    version '2018.1.4'
+}
+apply plugin: 'java-library'
+
+repositories {
+    mavenCentral()
+}
+
+
+patchPluginXml {
+    changeNotes """
+      Add change notes here.<br>
+      <em>most HTML tags may be used</em>"""
+}
+
+dependencies {
+    compile 'org.apache.httpcomponents:httpclient:4.5.5'
+}
+
