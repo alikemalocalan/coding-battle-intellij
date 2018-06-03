@@ -1,5 +1,7 @@
 package com.alikemal.codestat.model;
 
+import org.apache.tapestry5.json.JSONObject;
+
 public class XP {
     private String language;
     private int xp;
@@ -45,5 +47,19 @@ public class XP {
 
     public void increaseXP() {
         this.xp = ++xp;
+    }
+
+
+    // create by build json plugin
+    public JSONObject toJson() {
+        JSONObject jo = new JSONObject();
+        jo.put("language", language);
+        jo.put("xp", xp);
+        return jo;
+    }
+
+    @Override
+    public String toString() {
+        return toJson().toString();
     }
 }
