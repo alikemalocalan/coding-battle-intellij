@@ -23,5 +23,6 @@ patchPluginXml {
 
 dependencies {
     compile 'org.apache.httpcomponents:httpclient:4.5.5'
+    compile 'org.apache.tapestry:tapestry-json:5.4.3'
 }
 
