@@ -101,11 +101,6 @@ public class StatsCollector implements ApplicationComponent {
 
     public void handleKeyEvent(Language language) {
 
-        if (Config.API_KEY_NAME == null) {
-            // Don't collect data without an API key
-            return;
-        }
-
         final String languageName = language.getDisplayName();
 
         if (xps.containsKey(languageName)) {
