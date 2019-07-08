@@ -10,9 +10,54 @@ import java.awt.event.MouseEvent;
 
 public class StatusBarIcon implements StatusBarWidget {
     public static final String STATUS_BAR_ID_PREFIX = "code-stats-intellij-status-bar-icon-";
+
+    private class StatusBarPresentation implements TextPresentation {
+
+        private String text = "C::S";
+        private String tooltipText = null;
+
+        @NotNull
+        @Override
+        public String getText() {
+            return text;
+        }
+
+        @NotNull
+        @Override
+        public String getMaxPossibleText() {
+            return "C::S ERR!";
+        }
+
+        @Override
+        public float getAlignment() {
+            return 0;
+        }
+
+        @Nullable
+        @Override
+        public String getTooltipText() {
+            return tooltipText;
+        }
+
+        @Nullable
+        @Override
+        public Consumer<MouseEvent> getClickConsumer() {
+            return null;
+        }
+
+        public void setText(String text) {
+            this.text = text;
+        }
+
+        public void setToolTipText(String toolTipText) {
+            this.tooltipText = toolTipText;
+        }
+    }
+
     private String ID;
     private StatusBarPresentation statusBarPresentation;
     private StatusBar statusBar;
+
     public StatusBarIcon(final String ID, final StatusBar statusBar) {
         this.ID = STATUS_BAR_ID_PREFIX + ID;
         statusBarPresentation = new StatusBarPresentation();
@@ -68,48 +113,5 @@ public class StatusBarIcon implements StatusBarWidget {
     private void updateStatusBars() {
         // Trigger repaint on this icon's statusbar
         statusBar.updateWidget(ID);
-    }
-
-    private class StatusBarPresentation implements TextPresentation {
-
-        private String text = "C::S";
-        private String tooltipText = null;
-
-        @NotNull
-        @Override
-        public String getText() {
-            return text;
-        }
-
-        public void setText(String text) {
-            this.text = text;
-        }
-
-        @NotNull
-        @Override
-        public String getMaxPossibleText() {
-            return "C::S ERR!";
-        }
-
-        @Override
-        public float getAlignment() {
-            return 0;
-        }
-
-        @Nullable
-        @Override
-        public String getTooltipText() {
-            return tooltipText;
-        }
-
-        @Nullable
-        @Override
-        public Consumer<MouseEvent> getClickConsumer() {
-            return null;
-        }
-
-        public void setToolTipText(String toolTipText) {
-            this.tooltipText = toolTipText;
-        }
     }
 }

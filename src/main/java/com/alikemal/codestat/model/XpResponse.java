@@ -1,8 +1,5 @@
 package com.alikemal.codestat.model;
 
-import org.apache.tapestry5.json.JSONArray;
-import org.apache.tapestry5.json.JSONObject;
-
 import java.util.List;
 
 public class XpResponse {
@@ -34,21 +31,4 @@ public class XpResponse {
         this.xps = xps;
     }
 
-
-    // create by build json plugin
-    public JSONObject toJson() {
-        JSONObject jo = new JSONObject();
-        jo.put("coded_at", coded_at);
-        JSONArray jArray = new JSONArray();
-        for (XP x : xps) {
-            jArray.put(x.toJson());
-        }
-        jo.put("xps", jArray);
-        return jo;
-    }
-
-    @Override
-    public String toString() {
-        return toJson().toString();
-    }
 }
