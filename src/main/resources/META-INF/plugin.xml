@@ -1,32 +1,22 @@
 <idea-plugin>
     <id>com.alikemal.code-stat-intellij</id>
     <name>Code::Stats</name>
-    <vendor email="support@yourcompany.com" url="http://www.yourcompany.com">YourCompany</vendor>
+    <vendor email="support@alikemal.com" url="https://github.com/alikemalocalan">Ali Kemal</vendor>
 
     <description><![CDATA[
-    Code::Stats plugin for the IntelliJ/JetBrains range of IDEs.
-  ]]></description>
+    Code::Stats plugin for IntelliJ/JetBrains IDEs (2026+ compatible).
+    Tracks typed characters per programming language and sends XP updates to Code::Stats servers.
+    ]]></description>
 
-    <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
-         on how to target different products -->
-    <!-- uncomment to enable plugin in all products
-
-    -->
     <depends>com.intellij.modules.lang</depends>
 
-    <idea-version since-build="145.0"/>
+    <idea-version since-build="261"/>
 
     <extensions defaultExtensionNs="com.intellij">
-        <applicationConfigurable instance="com.alikemal.codestat.ui.SettingsForm"/>
+        <applicationService serviceImplementation="com.alikemal.codestat.CodeStatsSettings"/>
+        <applicationService serviceImplementation="com.alikemal.codestat.CodeStatsService" preload="true"/>
+        <applicationConfigurable instance="com.alikemal.codestat.ui.CodeStatsConfigurable" displayName="Code::Stats" groupId="tools"/>
+        <statusBarWidgetFactory implementation="com.alikemal.codestat.ui.CodeStatsWidgetFactory" id="code-stats-intellij-status-bar-icon"/>
+        <postStartupActivity implementation="com.alikemal.codestat.CodeStatsStartupActivity"/>
     </extensions>
-
-    <actions>
-        <!-- Add your actions here -->
-    </actions>
-
-    <application-components>
-        <component>
-            <implementation-class>com.alikemal.codestat.StatsCollector</implementation-class>
-        </component>
-    </application-components>
 </idea-plugin>
