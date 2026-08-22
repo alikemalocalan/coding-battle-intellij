@@ -2,83 +2,82 @@ package com.alikemal.codestat.ui
 
 import com.alikemal.codestat.CodeStatsSettings
 import com.intellij.openapi.options.Configurable
-import com.intellij.openapi.options.ConfigurationException
-import com.intellij.ui.components.JBLabel
-import com.intellij.ui.components.JBPasswordField
-import com.intellij.ui.components.JBTextField
-import com.intellij.util.ui.FormBuilder
+import com.intellij.ui.dsl.builder.COLUMNS_MEDIUM
+import com.intellij.ui.dsl.builder.bindText
+import com.intellij.ui.dsl.builder.columns
+import com.intellij.ui.dsl.builder.panel
 import javax.swing.JComponent
-import javax.swing.JPanel
 
 class CodeStatsConfigurable : Configurable {
 
-    private var apiUrlField: JBTextField? = null
-    private var apiTokenField: JBPasswordField? = null
-    private var updateIntervalField: JBTextField? = null
+    private val settings: CodeStatsSettings?
+        get() = CodeStatsSettings.getInstance()
+
+    private var apiUrl: String = ""
+    private var apiToken: String = ""
+    private var updateIntervalText: String = "10"
+
+    private val panelComponent by lazy {
+        panel {
+            group("Code::Stats Settings") {
+                row("API URL:") {
+                    textField()
+                        .bindText(::apiUrl)
+                        .columns(COLUMNS_MEDIUM)
+                }
+                row("API Token:") {
+                    passwordField()
+                        .bindText(::apiToken)
+                        .columns(COLUMNS_MEDIUM)
+                }
+                row("Pulse Interval (seconds):") {
+                    textField()
+                        .bindText(::updateIntervalText)
+                        .columns(COLUMNS_MEDIUM)
+                }
+            }
+        }
+    }
 
     override fun getDisplayName(): String = "Code::Stats"
 
     override fun createComponent(): JComponent {
-        val apiUrl = JBTextField()
-        val apiToken = JBPasswordField()
-        val updateInterval = JBTextField()
-
-        this.apiUrlField = apiUrl
-        this.apiTokenField = apiToken
-        this.updateIntervalField = updateInterval
-
-        return FormBuilder.createFormBuilder()
-            .addLabeledComponent(JBLabel("API URL:"), apiUrl, 1, false)
-            .addLabeledComponent(JBLabel("API Token:"), apiToken, 1, false)
-            .addLabeledComponent(JBLabel("Pulse Interval (seconds):"), updateInterval, 1, false)
-            .addComponentFillVertically(JPanel(), 0)
-            .panel
+        reset()
+        return panelComponent
     }
 
     override fun isModified(): Boolean {
-        val settings = CodeStatsSettings.getInstance() ?: return false
-
-        val currentUrl = apiUrlField?.text ?: ""
-        val currentToken = String(apiTokenField?.password ?: charArrayOf())
-        val currentInterval = updateIntervalField?.text ?: ""
-
-        return currentUrl != settings.getApiUrl() ||
-                currentToken != settings.getApiToken() ||
-                currentInterval != settings.getUpdateIntervalSeconds().toString()
+        return panelComponent.isModified()
     }
 
     override fun apply() {
-        val settings = CodeStatsSettings.getInstance() ?: return
+        panelComponent.apply()
 
-        val url = apiUrlField?.text?.trim() ?: ""
-        val token = String(apiTokenField?.password ?: charArrayOf()).trim()
-        val intervalText = updateIntervalField?.text?.trim() ?: ""
+        val s = settings ?: return
+        s.setApiUrl(apiUrl.trim())
+        s.setApiToken(apiToken.trim())
 
-        settings.setApiUrl(url)
-        settings.setApiToken(token)
-
-        try {
-            val interval = intervalText.toLong()
-            if (interval <= 0) {
-                throw NumberFormatException()
-            }
-            settings.setUpdateIntervalSeconds(interval)
-        } catch (e: NumberFormatException) {
-            throw ConfigurationException("Pulse interval must be a positive integer.")
+        val interval = updateIntervalText.trim().toLongOrNull()
+        if (interval != null && interval > 0) {
+            s.setUpdateIntervalSeconds(interval)
         }
     }
 
     override fun reset() {
-        val settings = CodeStatsSettings.getInstance() ?: return
+        val s = settings
+        if (s != null) {
+            apiUrl = s.getApiUrl()
+            apiToken = s.getApiToken()
+            updateIntervalText = s.getUpdateIntervalSeconds().toString()
+            panelComponent.reset()
 
-        apiUrlField?.text = settings.getApiUrl()
-        apiTokenField?.text = settings.getApiToken()
-        updateIntervalField?.text = settings.getUpdateIntervalSeconds().toString()
-    }
-
-    override fun disposeUIResources() {
-        apiUrlField = null
-        apiTokenField = null
-        updateIntervalField = null
+            s.loadTokenFromStorageAsync {
+                val token = s.getApiToken()
+                if (apiToken != token) {
+                    apiToken = token
+                    panelComponent.reset()
+                }
+            }
+        }
     }
 }

@@ -7,7 +7,6 @@ import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.StatusBarWidget.TextPresentation
 import com.intellij.util.Consumer
 import java.awt.event.MouseEvent
-import java.util.concurrent.ConcurrentHashMap
 
 class StatusBarIcon(
     val project: Project
@@ -18,38 +17,40 @@ class StatusBarIcon(
     private var tooltip: String = "Code::Stats active"
 
     companion object {
-        private val ACTIVE_WIDGETS = ConcurrentHashMap.newKeySet<StatusBarIcon>()
-
         @JvmStatic
-        fun setUpdatingAll() {
-            ApplicationManager.getApplication().invokeLater {
-                ACTIVE_WIDGETS.forEach { icon ->
-                    icon.updateState("C::S…", "Updating Code::Stats…")
-                }
-            }
+        fun notifyUpdating() {
+            ApplicationManager.getApplication()?.messageBus?.syncPublisher(CodeStatsNotifier.TOPIC)?.onUpdating()
         }
 
         @JvmStatic
-        fun setSuccessAll() {
-            ApplicationManager.getApplication().invokeLater {
-                ACTIVE_WIDGETS.forEach { icon ->
-                    icon.updateState("C::S", "Code::Stats updated successfully")
-                }
-            }
+        fun notifySuccess() {
+            ApplicationManager.getApplication()?.messageBus?.syncPublisher(CodeStatsNotifier.TOPIC)?.onSuccess()
         }
 
         @JvmStatic
-        fun setErrorAll(errorMsg: String) {
-            ApplicationManager.getApplication().invokeLater {
-                ACTIVE_WIDGETS.forEach { icon ->
-                    icon.updateState("C::S ERR!", "Code::Stats Error: $errorMsg")
-                }
-            }
+        fun notifyError(errorMessage: String) {
+            ApplicationManager.getApplication()?.messageBus?.syncPublisher(CodeStatsNotifier.TOPIC)?.onError(errorMessage)
         }
     }
 
     init {
-        ACTIVE_WIDGETS.add(this)
+        val app = ApplicationManager.getApplication()
+        if (app != null) {
+            val connection = app.messageBus.connect(this)
+            connection.subscribe(CodeStatsNotifier.TOPIC, object : CodeStatsNotifier {
+                override fun onUpdating() {
+                    updateState("C::S…", "Updating Code::Stats…")
+                }
+
+                override fun onSuccess() {
+                    updateState("C::S", "Code::Stats updated successfully")
+                }
+
+                override fun onError(errorMessage: String) {
+                    updateState("C::S ERR!", "Code::Stats Error: $errorMessage")
+                }
+            })
+        }
     }
 
     override fun ID(): String = CodeStatsWidgetFactory.WIDGET_ID
@@ -61,7 +62,6 @@ class StatusBarIcon(
     }
 
     override fun dispose() {
-        ACTIVE_WIDGETS.remove(this)
         this.statusBar = null
     }
 
@@ -73,9 +73,11 @@ class StatusBarIcon(
 
     override fun getClickConsumer(): Consumer<MouseEvent>? = null
 
-    fun updateState(newText: String, newTooltip: String) {
+    private fun updateState(newText: String, newTooltip: String) {
         this.text = newText
         this.tooltip = newTooltip
-        statusBar?.updateWidget(ID())
+        ApplicationManager.getApplication()?.invokeLater {
+            statusBar?.updateWidget(ID())
+        }
     }
 }

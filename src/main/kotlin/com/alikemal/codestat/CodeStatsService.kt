@@ -7,20 +7,25 @@ import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.concurrency.AppExecutorUtil
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ScheduledExecutorService
-import java.util.concurrent.ScheduledFuture
-import java.util.concurrent.TimeUnit
+import kotlin.time.Duration.Companion.milliseconds
 
 @Service(Service.Level.APP)
 class CodeStatsService : Disposable {
 
     private val xps = ConcurrentHashMap<String, Int>()
-    private val executor: ScheduledExecutorService =
-        AppExecutorUtil.createBoundedScheduledExecutorService("CodeStatsExecutor", 1)
-    private var updateTimer: ScheduledFuture<*>? = null
+    private val languageCache = ConcurrentHashMap<FileType, String>()
+
+    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private var debounceJob: Job? = null
 
     companion object {
         @JvmStatic
@@ -42,7 +47,7 @@ class CodeStatsService : Disposable {
                 val file = FileDocumentManager.getInstance().getFile(event.document) ?: return
                 if (!file.isInLocalFileSystem) return
 
-                val language = getLanguageName(file)
+                val language = getLanguageNameCached(file)
                 handleKeyEvent(language, addedLength)
             }
         }, this)
@@ -52,25 +57,31 @@ class CodeStatsService : Disposable {
         xps.merge(languageName, count) { a, b -> a + b }
 
         val settings = CodeStatsSettings.getInstance()
-        val interval = settings?.getUpdateIntervalSeconds() ?: CodeStatsConfig.DEFAULT_UPDATE_INTERVAL
+        val intervalSeconds = settings?.getUpdateIntervalSeconds() ?: CodeStatsConfig.DEFAULT_UPDATE_INTERVAL
 
         synchronized(this) {
-            updateTimer?.takeIf { !it.isCancelled }?.cancel(false)
-            val task = UpdateTask(xps)
-            updateTimer = executor.schedule(task, interval, TimeUnit.SECONDS)
+            debounceJob?.cancel()
+            debounceJob = serviceScope.launch {
+                delay((intervalSeconds * 1000L).milliseconds)
+                UpdateTask(xps).run()
+            }
         }
     }
 
-    private fun getLanguageName(file: VirtualFile): String {
-        val name = file.fileType.name
-        if (name.equals("Unknown", ignoreCase = true) || name.equals("PLAIN_TEXT", ignoreCase = true)) {
-            val ext = file.extension
-            return if (!ext.isNullOrBlank()) ext else "Plain text"
+    private fun getLanguageNameCached(file: VirtualFile): String {
+        val fileType = file.fileType
+        return languageCache.computeIfAbsent(fileType) { ft ->
+            val name = ft.name
+            if (name.equals("Unknown", ignoreCase = true) || name.equals("PLAIN_TEXT", ignoreCase = true)) {
+                val ext = file.extension
+                if (!ext.isNullOrBlank()) ext else "Plain text"
+            } else {
+                name
+            }
         }
-        return name
     }
 
     override fun dispose() {
-        executor.shutdownNow()
+        debounceJob?.cancel()
     }
 }

@@ -18,11 +18,11 @@ class UpdateTask(
         val apiUrl = settings?.getApiUrl() ?: CodeStatsConfig.DEFAULT_API_URL
 
         if (apiToken.isBlank()) {
-            StatusBarIcon.setErrorAll("API key not set in Settings | Tools | Code::Stats")
+            StatusBarIcon.notifyError("API key not set in Settings | Tools | Code::Stats")
             return
         }
 
-        StatusBarIcon.setUpdatingAll()
+        StatusBarIcon.notifyUpdating()
 
         // Take a snapshot copy of current XP values to send
         val snapshot = HashMap(xps)
@@ -35,16 +35,16 @@ class UpdateTask(
                         if (remaining <= 0) null else remaining
                     }
                 }
-                StatusBarIcon.setSuccessAll()
+                StatusBarIcon.notifySuccess()
             }
             is PulseResult.Unauthorized -> {
-                StatusBarIcon.setErrorAll(result.message)
+                StatusBarIcon.notifyError(result.message)
             }
             is PulseResult.HttpError -> {
-                StatusBarIcon.setErrorAll(result.message)
+                StatusBarIcon.notifyError(result.message)
             }
             is PulseResult.ConnectionError -> {
-                StatusBarIcon.setErrorAll("Connection error: ${result.exception.message}")
+                StatusBarIcon.notifyError("Connection error: ${result.exception.message}")
             }
         }
     }
